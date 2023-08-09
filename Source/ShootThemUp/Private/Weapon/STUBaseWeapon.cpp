@@ -66,6 +66,12 @@ void ASTUBaseWeapon::ReloadAmmo()
     ChangeClip();
 }
 
+void ASTUBaseWeapon::AddAmmo(int32 NumOfClips)
+{
+    if (!DefaultAmmo.Infinite && CurrentAmmo.Clips < DefaultAmmo.Clips)
+        CurrentAmmo.Clips = FMath::Clamp(CurrentAmmo.Clips + NumOfClips, 0, DefaultAmmo.Clips);
+}
+
 // Called when the game starts or when spawned
 void ASTUBaseWeapon::BeginPlay()
 {

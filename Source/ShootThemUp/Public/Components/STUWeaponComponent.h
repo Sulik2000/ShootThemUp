@@ -22,6 +22,8 @@ class SHOOTTHEMUP_API USTUWeaponComponent : public UActorComponent
     // Sets default values for this component's properties
     USTUWeaponComponent();
 
+    bool AddAmmoToWeapon(TSubclassOf<ASTUBaseWeapon> Weapon, int32 NumOfClips);
+
     void StartFire();
     void ReloadWeapon();
     void StopFire();

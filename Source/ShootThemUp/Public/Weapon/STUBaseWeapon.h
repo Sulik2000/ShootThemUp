@@ -49,6 +49,8 @@ class SHOOTTHEMUP_API ASTUBaseWeapon : public AActor
     FAmmoData GetCurrentAmmo() const;
 
     virtual void ReloadAmmo();
+
+    virtual void AddAmmo(int32 NumOfClips);
   protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UI")
     FWeaponUIData UIData;

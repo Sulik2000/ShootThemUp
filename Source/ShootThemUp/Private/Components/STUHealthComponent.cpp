@@ -29,6 +29,7 @@ void USTUHealthComponent::BeginPlay()
 
     Health = MaxHealth;
     OnHealthChanged.Broadcast(Health);
+    OnHealthPickup.AddUObject(this, &USTUHealthComponent::OnHealthPickupTake);
 
     AActor *ComponentOwner = GetOwner();
     if (ComponentOwner)
@@ -72,4 +73,9 @@ void USTUHealthComponent::OnTakeAnyDamage(AActor *DamagedActor, float Damage, co
     {
         GetWorld()->GetTimerManager().SetTimer(HealTimer, this, &USTUHealthComponent::StartHealing, HealingDelay);
     }
+}
+
+void USTUHealthComponent::OnHealthPickupTake()
+{
+    Health = MaxHealth;
 }

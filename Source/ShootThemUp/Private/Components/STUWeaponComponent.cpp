@@ -20,6 +20,23 @@ USTUWeaponComponent::USTUWeaponComponent()
     // ...
 }
 
+bool USTUWeaponComponent::AddAmmoToWeapon(TSubclassOf<ASTUBaseWeapon> Weapon, int32 NumOfClips)
+{
+    ASTUBaseWeapon* weapon = nullptr;
+    for (auto i : Weapons)
+    {
+        if (i && i->IsA(*Weapon))
+        {
+            weapon = i;
+            break;
+        }
+    }
+    if (!weapon) return false;
+
+    weapon->AddAmmo(NumOfClips);
+    return true;
+}
+
 void USTUWeaponComponent::StartFire()
 {
     if (!CurrentWeapon || !CanFire())

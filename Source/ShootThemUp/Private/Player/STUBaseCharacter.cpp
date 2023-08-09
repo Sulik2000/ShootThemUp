@@ -46,6 +46,8 @@ void ASTUBaseCharacter::BeginPlay()
 
     LandedDelegate.AddDynamic(this, &ASTUBaseCharacter::OnGroundLanded);
 
+    check(HealthComponent);
+
     HealthComponent->OnDeath.AddUObject(this, &ASTUBaseCharacter::OnDeathHandle);
     HealthComponent->OnHealthChanged.AddUObject(this, &ASTUBaseCharacter::OnHealthChangedHandle);
 }

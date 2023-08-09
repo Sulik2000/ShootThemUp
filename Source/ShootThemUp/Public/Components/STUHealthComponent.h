@@ -8,6 +8,7 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnDeath)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float)
+DECLARE_MULTICAST_DELEGATE(FOnHealthPickup)
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class SHOOTTHEMUP_API USTUHealthComponent : public UActorComponent
@@ -26,9 +27,12 @@ class SHOOTTHEMUP_API USTUHealthComponent : public UActorComponent
     FOnDeath OnDeath;
     FOnHealthChanged OnHealthChanged;
 
+    void OnHealthPickupTake();
+
     UFUNCTION(BlueprintCallable, Category = "Health")
     float GetHealthPercent() const;
 
+    FOnHealthPickup OnHealthPickup;
   protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Health")
     bool AutoHeal = true;
