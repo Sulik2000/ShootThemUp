@@ -5,3 +5,4 @@ Saved/
 *.sln
 DerivedDataCache/
 Build/
+enc_temp_folder/

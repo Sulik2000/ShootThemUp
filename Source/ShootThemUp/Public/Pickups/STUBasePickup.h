@@ -40,4 +40,8 @@ class SHOOTTHEMUP_API ASTUBasePickup : public AActor
   private:
     void PickupWasTaken();
     void Respawn();
+    void GenerateRotationYaw();
+
+    float RotationYaw = 0.0f;
+    const float Direction = FMath::RandBool() ? 1.0f : -1.0f;
 };
