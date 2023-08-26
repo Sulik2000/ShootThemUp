@@ -9,6 +9,9 @@
 DECLARE_MULTICAST_DELEGATE(FOnDeath)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float)
 DECLARE_MULTICAST_DELEGATE(FOnHealthPickup)
+DECLARE_MULTICAST_DELEGATE(FOnDamageTaken)
+
+class UCameraShakeBase;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class SHOOTTHEMUP_API USTUHealthComponent : public UActorComponent
@@ -26,6 +29,7 @@ class SHOOTTHEMUP_API USTUHealthComponent : public UActorComponent
 
     FOnDeath OnDeath;
     FOnHealthChanged OnHealthChanged;
+    FOnDamageTaken OnDamageTaken;
 
     void OnHealthPickupTake();
 
@@ -46,6 +50,9 @@ class SHOOTTHEMUP_API USTUHealthComponent : public UActorComponent
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Health")
     float HealingDelay = 5.0f;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
+    TSubclassOf<UCameraShakeBase> CameraShake;
+
     virtual void BeginPlay() override;
     virtual void TickComponent(float DeltaTime, enum ELevelTick TickType,
                                FActorComponentTickFunction *ThisTickFunction) override;
@@ -61,4 +68,6 @@ class SHOOTTHEMUP_API USTUHealthComponent : public UActorComponent
     
     bool IsHealing = false;
     FTimerHandle HealTimer;
+
+    void PlayCameraShake(float Scale = 1.0f);
 };

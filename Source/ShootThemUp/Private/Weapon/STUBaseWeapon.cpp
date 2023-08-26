@@ -8,6 +8,7 @@
 #include <Math/Rotator.h>
 #include <Math/Transform.h>
 #include <Math/Vector.h>
+#include <NiagaraFunctionLibrary.h>
 
 DEFINE_LOG_CATEGORY_STATIC(LogFireWeapon, All, All)
 
@@ -66,10 +67,10 @@ void ASTUBaseWeapon::ReloadAmmo()
     ChangeClip();
 }
 
-void ASTUBaseWeapon::AddAmmo(int32 NumOfClips)
+void ASTUBaseWeapon::AddAmmo()
 {
     if (!DefaultAmmo.Infinite && CurrentAmmo.Clips < DefaultAmmo.Clips)
-        CurrentAmmo.Clips = FMath::Clamp(CurrentAmmo.Clips + NumOfClips, 0, DefaultAmmo.Clips);
+        CurrentAmmo = DefaultAmmo;
 }
 
 // Called when the game starts or when spawned
@@ -94,6 +95,7 @@ void ASTUBaseWeapon::MakeShot()
             FMath::Acos(FVector::DotProduct(ShootDirection, HitVector) / (HitVector.Size() * ShootDirection.Size())));
 
         FCollisionQueryParams params;
+        params.bReturnPhysicalMaterial = true;
         params.AddIgnoredActor(GetOwner());
         while (HitAngle > 90)
         {
@@ -123,6 +125,16 @@ void ASTUBaseWeapon::MakeShot()
     }
 }
 
+UNiagaraComponent *ASTUBaseWeapon::SpawnMuzzleFX()
+{
+    return UNiagaraFunctionLibrary::SpawnSystemAttached(MuzzleFX,              //
+                                                        WeaponMeshComponent,   //
+                                                        MuzzleSocketName,      //
+                                                        FVector::ZeroVector,   //
+                                                        FRotator::ZeroRotator, //
+                                                        EAttachLocation::SnapToTarget, true);
+}
+
 AController *ASTUBaseWeapon::GetPlayerController()
 {
     if (!GetWorld())
@@ -145,7 +157,16 @@ FHitResult ASTUBaseWeapon::MakeLineTrace(AController *Controller, FCollisionQuer
         return FHitResult();
     FVector ViewLocation;
     FRotator ViewRotation;
-    Controller->GetPlayerViewPoint(ViewLocation, ViewRotation);
+
+    const auto STUCharacter = Cast<ACharacter>(GetOwner());
+    if (STUCharacter->IsPlayerControlled())
+        Controller->GetPlayerViewPoint(ViewLocation, ViewRotation);
+
+    else
+    {
+        ViewLocation = GetMuzzleSocketTransform().GetLocation();
+        ViewRotation = WeaponMeshComponent->GetSocketRotation(MuzzleSocketName);
+    }
 
     const FTransform SocketTransform = WeaponMeshComponent->GetSocketTransform(MuzzleSocketName);
     const FVector StartTrace = ViewLocation;
@@ -163,8 +184,6 @@ void ASTUBaseWeapon::DecreaseAmmo()
     CurrentAmmo.Bullets = FMath::Clamp(CurrentAmmo.Bullets - 1, 0, DefaultAmmo.Bullets);
     if (IsClipEmpty())
         ChangeClip();
-
-    LogAmmo();
 }
 
 bool ASTUBaseWeapon::IsAmmoEmpty() const
@@ -182,6 +201,10 @@ void ASTUBaseWeapon::ChangeClip()
     if (!IsAmmoEmpty())
     {
         OnReloadStarted.Broadcast();
+    }
+    else
+    {
+        OnAmmoEmpty.Broadcast();
     }
 }
 

@@ -17,6 +17,8 @@ class SHOOTTHEMUP_API ASTUBasePickup : public AActor
     // Sets default values for this actor's properties
     ASTUBasePickup();
 
+    bool CouldBeTaken() const;
+
   protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
@@ -44,4 +46,6 @@ class SHOOTTHEMUP_API ASTUBasePickup : public AActor
 
     float RotationYaw = 0.0f;
     const float Direction = FMath::RandBool() ? 1.0f : -1.0f;
+
+    FTimerHandle RespawnTimer;
 };

@@ -20,7 +20,7 @@ USTUWeaponComponent::USTUWeaponComponent()
     // ...
 }
 
-bool USTUWeaponComponent::AddAmmoToWeapon(TSubclassOf<ASTUBaseWeapon> Weapon, int32 NumOfClips)
+bool USTUWeaponComponent::AddAmmoToWeapon(TSubclassOf<ASTUBaseWeapon> Weapon)
 {
     ASTUBaseWeapon* weapon = nullptr;
     for (auto i : Weapons)
@@ -33,8 +33,13 @@ bool USTUWeaponComponent::AddAmmoToWeapon(TSubclassOf<ASTUBaseWeapon> Weapon, in
     }
     if (!weapon) return false;
 
-    weapon->AddAmmo(NumOfClips);
+    weapon->AddAmmo();
     return true;
+}
+
+void USTUWeaponComponent::OnAmmoEmpty()
+{
+    StopFire();
 }
 
 void USTUWeaponComponent::StartFire()
@@ -116,6 +121,19 @@ bool USTUWeaponComponent::CanEquip() const
     return canEquip;
 }
 
+bool USTUWeaponComponent::GetWeaponAmmoData(FAmmoData &AmmoData, TSubclassOf<ASTUBaseWeapon> WeaponClass) const
+{
+    for (auto i : Weapons)
+    {
+        if (i->IsA(*WeaponClass))
+        {
+            AmmoData = i->GetCurrentAmmo();
+            return true;
+        }
+    }
+    return false;
+}
+
 bool USTUWeaponComponent::GetWeaponUIData(FWeaponUIData &WeaponData) const
 {
     if (CurrentWeapon)
@@ -158,6 +176,7 @@ void USTUWeaponComponent::SpawnWeapons()
 
         OnWeaponSwitch.AddDynamic(CurrentWeapon, &ASTUBaseWeapon::OnWeaponSwitch);
         Weapons[0]->OnReloadStarted.AddUObject(this, &USTUWeaponComponent::OnReloadStarted);
+        Weapons[0]->OnAmmoEmpty.AddUObject(this, &USTUWeaponComponent::OnAmmoEmpty);
         OnReloadFinished.AddUObject(Weapons[0], &ASTUBaseWeapon::OnReloadFinished);
     }
 
@@ -170,6 +189,7 @@ void USTUWeaponComponent::SpawnWeapons()
 
         OnWeaponSwitch.AddDynamic(Weapons[1], &ASTUBaseWeapon::OnWeaponSwitch);
         Weapons[1]->OnReloadStarted.AddUObject(this, &USTUWeaponComponent::OnReloadStarted);
+        Weapons[1]->OnAmmoEmpty.AddUObject(this, &USTUWeaponComponent::OnAmmoEmpty);
         OnReloadFinished.AddUObject(Weapons[1], &ASTUBaseWeapon::OnReloadFinished);
     }
 

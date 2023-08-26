@@ -26,5 +26,5 @@ bool ASTUAmmoPickup::GivePickupTo(APawn *PlayerPawn)
 
     UE_LOG(LogAmmoPickup, Display, TEXT("Pickup ammo was taken"));
 
-    return weaponComp->AddAmmoToWeapon(WeaponClass, ClipsGiven);
+    return weaponComp->AddAmmoToWeapon(WeaponClass);
 }

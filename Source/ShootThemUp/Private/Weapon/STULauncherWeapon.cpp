@@ -4,6 +4,7 @@
 #include "Weapon/STULauncherWeapon.h"
 #include <Weapon/STUProjectile.h>
 #include <Kismet/GameplayStatics.h>
+#include <GameFramework/Character.h>
 
 DEFINE_LOG_CATEGORY_STATIC(LogLauncherWeapon, All, All)
 
@@ -23,7 +24,14 @@ void ASTULauncherWeapon::MakeShot()
     FHitResult HitResult = MakeLineTrace(GetPlayerController(), params);
     FVector Location;
     FRotator Rotation;
-    GetPlayerController()->GetPlayerViewPoint(Location, Rotation);
+    if (Cast<ACharacter>(GetOwner())->IsPlayerControlled())
+        GetPlayerController()->GetPlayerViewPoint(Location, Rotation);
+    
+    else
+    {
+        Rotation = GetMuzzleSocketTransform().GetRotation().Rotator();
+        Location = GetMuzzleSocketTransform().GetLocation();
+    }
 
     // Set projectile params
     const FVector EndPoint = HitResult.bBlockingHit ? HitResult.ImpactPoint : GetActorLocation() + Rotation.Vector() * TraceMaxDistance;
@@ -38,4 +46,6 @@ void ASTULauncherWeapon::MakeShot()
         Projectile->FinishSpawning(SpawnTransform);
     }
     DecreaseAmmo();
+
+    SpawnMuzzleFX();
 }

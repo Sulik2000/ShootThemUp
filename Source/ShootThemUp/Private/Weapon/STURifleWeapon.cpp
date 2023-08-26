@@ -1,10 +1,21 @@
 // Shoot Them Up Game. All rights are reserved.
 
 #include "Weapon/STURifleWeapon.h"
+#include <Components/STUWeaponFXComponent.h>
 #include <DrawDebugHelpers.h>
+#include <NiagaraComponent.h>
+#include <NiagaraFunctionLibrary.h>
+#include <NiagaraSystem.h>
+#include <GameFramework/Character.h>
+
+ASTURifleWeapon::ASTURifleWeapon()
+{
+    FXComponent = CreateDefaultSubobject<USTUWeaponFXComponent>("EffectComponent");
+}
 
 void ASTURifleWeapon::StartFire()
 {
+    InitMuzzleFX();
     MakeShot();
     GetWorldTimerManager().SetTimer(ShootTimerHandle, this, &ASTURifleWeapon::MakeShot, ShootCooldown, true);
 }
@@ -12,11 +23,12 @@ void ASTURifleWeapon::StartFire()
 void ASTURifleWeapon::StopFire()
 {
     GetWorldTimerManager().ClearTimer(ShootTimerHandle);
+    SetMuzzleFXVisibility(false);
 }
 
 void ASTURifleWeapon::OnWeaponSwitch()
 {
-    GetWorldTimerManager().ClearTimer(ShootTimerHandle);
+    StopFire();
 }
 
 void ASTURifleWeapon::MakeShot()
@@ -26,6 +38,7 @@ void ASTURifleWeapon::MakeShot()
         StopFire();
         return;
     }
+
     FHitResult HitResult = MakeLineTrace(GetPlayerController());
     const auto ShootDirection = WeaponMeshComponent->GetSocketTransform(MuzzleSocketName).GetRotation().Vector();
 
@@ -60,9 +73,7 @@ void ASTURifleWeapon::MakeShot()
     // For debug information
     if (HitResult.bBlockingHit)
     {
-        DrawDebugLine(GetWorld(), WeaponMeshComponent->GetSocketTransform(MuzzleSocketName).GetLocation(),
-                      HitResult.ImpactPoint, FColor::Red, false, 3.0f, 0, 3.0f);
-        DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 10.0f, 24, FColor::Red, false, 5.0f);
+        FXComponent->PlayImpactFX(HitResult);
     }
 
     DecreaseAmmo();
@@ -70,19 +81,72 @@ void ASTURifleWeapon::MakeShot()
 
 FHitResult ASTURifleWeapon::MakeLineTrace(AController *Controller, FCollisionQueryParams params)
 {
-    if (!Controller)
-        return FHitResult();
+    params.bReturnPhysicalMaterial = true;
+    
     FVector ViewLocation;
     FRotator ViewRotation;
-    Controller->GetPlayerViewPoint(ViewLocation, ViewRotation);
+
+    const auto STUCharacter = Cast<ACharacter>(GetOwner());
+    if (STUCharacter->IsPlayerControlled() && Controller)
+        Controller->GetPlayerViewPoint(ViewLocation, ViewRotation);
+
+    else
+    {
+        ViewLocation = GetMuzzleSocketTransform().GetLocation();
+        ViewRotation = WeaponMeshComponent->GetSocketRotation(MuzzleSocketName);
+    }
 
     const FTransform SocketTransform = WeaponMeshComponent->GetSocketTransform(MuzzleSocketName);
     const FVector StartTrace = ViewLocation;
-    const FVector ShootDirection = ViewRotation.Vector();
+    const FVector ShootDirection = FMath::VRandCone(ViewRotation.Vector(), FMath::DegreesToRadians(WeaponRecoil));
     const FVector TraceEnd = StartTrace + ShootDirection * TraceMaxDistance;
 
     FHitResult HitResult;
     GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, TraceEnd, ECollisionChannel::ECC_Visibility, params);
 
+    FVector TraceFXEnd = TraceEnd;
+    if (HitResult.bBlockingHit)
+        TraceFXEnd = HitResult.ImpactPoint;
+
+    SpawnTraceFX(GetMuzzleSocketTransform().GetLocation(), TraceFXEnd);
+
     return HitResult;
+}
+
+void ASTURifleWeapon::BeginPlay()
+{
+    Super::BeginPlay();
+
+    check(FXComponent);
+}
+
+void ASTURifleWeapon::InitMuzzleFX()
+{
+    if (!MuzzleFXComponent)
+    {
+        MuzzleFXComponent = SpawnMuzzleFX();
+    }
+    SetMuzzleFXVisibility(true);
+}
+
+void ASTURifleWeapon::SetMuzzleFXVisibility(bool Visibility)
+{
+    if (MuzzleFXComponent)
+    {
+        MuzzleFXComponent->SetPaused(!Visibility);
+        MuzzleFXComponent->SetVisibility(Visibility, true);
+    }
+}
+
+void ASTURifleWeapon::SpawnTraceFX(const FVector &StartTrace, const FVector &EndTrace)
+{
+    const auto TraceFXComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), //
+                                                                                 TraceFX,    //
+                                                                                 StartTrace);
+
+    if (!TraceFXComponent) return;
+
+    TraceFXComponent->SetPaused(true);
+    TraceFXComponent->SetVectorParameter(this->TraceTargetName, EndTrace);
+    TraceFXComponent->SetPaused(false);
 }

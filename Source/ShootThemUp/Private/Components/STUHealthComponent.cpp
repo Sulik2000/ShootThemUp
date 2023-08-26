@@ -2,6 +2,9 @@
 
 #include "Components/STUHealthComponent.h"
 #include <GameFramework/Actor.h>
+#include <GameFramework/Controller.h>
+#include <GameFramework/Pawn.h>
+#include <Camera/CameraShakeBase.h>
 
 DEFINE_LOG_CATEGORY_STATIC(LogHealthComponent, All, All);
 
@@ -57,6 +60,7 @@ void USTUHealthComponent::StartHealing()
 void USTUHealthComponent::OnTakeAnyDamage(AActor *DamagedActor, float Damage, const UDamageType *DamageType,
                                           AController *InstigatedBy, AActor *DamageCauser)
 {
+    OnDamageTaken.Broadcast();
     if (Damage <= 0.0f || IsDead())
         return;
 
@@ -73,6 +77,21 @@ void USTUHealthComponent::OnTakeAnyDamage(AActor *DamagedActor, float Damage, co
     {
         GetWorld()->GetTimerManager().SetTimer(HealTimer, this, &USTUHealthComponent::StartHealing, HealingDelay);
     }
+
+    PlayCameraShake();
+}
+
+void USTUHealthComponent::PlayCameraShake(float Scale)
+{
+    if (IsDead()) return;
+
+    const auto Player = Cast<APawn>(GetOwner());
+    if (!Player) return;
+
+    const auto Controller = Player->GetController<APlayerController>();
+    if (!Controller || !Controller->PlayerCameraManager) return;
+
+    Controller->PlayerCameraManager->StartCameraShake(CameraShake, Scale);
 }
 
 void USTUHealthComponent::OnHealthPickupTake()

@@ -14,7 +14,7 @@
 DEFINE_LOG_CATEGORY_STATIC(LogBaseCharacter, All, All);
 
 // Sets default values
-ASTUBaseCharacter::ASTUBaseCharacter()
+ASTUBaseCharacter::ASTUBaseCharacter(const FObjectInitializer &ObjInit)
 {
     // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need
     // it.
@@ -31,12 +31,7 @@ ASTUBaseCharacter::ASTUBaseCharacter()
 
     HealthComponent = CreateDefaultSubobject<USTUHealthComponent>("HealthComponent");
 
-    HealthTextComponent = CreateDefaultSubobject<UTextRenderComponent>("HealthTextComponent");
-    HealthTextComponent->SetupAttachment(GetRootComponent());
-
     WeaponComponent = CreateDefaultSubobject<USTUWeaponComponent>("WeaponComponent");
-
-    HealthTextComponent->bOwnerNoSee = true;
 }
 
 // Called when the game starts or when spawned
@@ -47,9 +42,9 @@ void ASTUBaseCharacter::BeginPlay()
     LandedDelegate.AddDynamic(this, &ASTUBaseCharacter::OnGroundLanded);
 
     check(HealthComponent);
+    check(GetMesh());
 
     HealthComponent->OnDeath.AddUObject(this, &ASTUBaseCharacter::OnDeathHandle);
-    HealthComponent->OnHealthChanged.AddUObject(this, &ASTUBaseCharacter::OnHealthChangedHandle);
 }
 
 float ASTUBaseCharacter::GetMovementDirection() const
@@ -67,7 +62,7 @@ void ASTUBaseCharacter::OnDeathHandle()
 {
     UE_LOG(LogBaseCharacter, Display, TEXT("%s character died!"), *GetName());
 
-    PlayAnimMontage(DeathAnimMontage);
+    //PlayAnimMontage(DeathAnimMontage);
 
     GetCharacterMovement()->DisableMovement();
 
@@ -76,12 +71,9 @@ void ASTUBaseCharacter::OnDeathHandle()
     {
         Controller->ChangeState(NAME_Spectating);
     }
-}
 
-void ASTUBaseCharacter::OnHealthChangedHandle(float Health)
-{
-    if (HealthTextComponent)
-        HealthTextComponent->SetText(FText::FromString(FString::Printf(TEXT("%i"), Health)));
+    GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    GetMesh()->SetSimulatePhysics(true);
 }
 
 void ASTUBaseCharacter::OnGroundLanded(const FHitResult &Hit)
@@ -132,9 +124,6 @@ void ASTUBaseCharacter::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
     if (IsRunning)
         MoveForward(1.0);
-
-    if (HealthTextComponent && HealthComponent)
-        HealthTextComponent->SetText(FText::FromString(FString::FromInt(HealthComponent->GetHealth())));
 }
 
 // Called to bind functionality to input

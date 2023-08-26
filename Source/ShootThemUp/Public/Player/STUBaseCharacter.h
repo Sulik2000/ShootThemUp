@@ -20,7 +20,7 @@ class SHOOTTHEMUP_API ASTUBaseCharacter : public ACharacter
 
   public:
     // Sets default values for this character's properties
-    ASTUBaseCharacter();
+    ASTUBaseCharacter(const FObjectInitializer &ObjInit);
 
   protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
@@ -37,9 +37,6 @@ class SHOOTTHEMUP_API ASTUBaseCharacter : public ACharacter
 
     UPROPERTY(EditDefaultsOnly, Category = "Animation")
     UAnimMontage *DeathAnimMontage;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
-    UTextRenderComponent *HealthTextComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
     bool IsRunning = false;
@@ -59,8 +56,7 @@ class SHOOTTHEMUP_API ASTUBaseCharacter : public ACharacter
     UFUNCTION(BlueprintCallable, Category = "Movement")
     float GetMovementDirection() const;
 
-    void OnDeathHandle();
-    void OnHealthChangedHandle(float Health);
+    virtual void OnDeathHandle();
     UFUNCTION()
     void OnGroundLanded(const FHitResult &Hit);
 

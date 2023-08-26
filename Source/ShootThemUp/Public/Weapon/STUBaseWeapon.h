@@ -8,6 +8,10 @@
 #include "STUBaseWeapon.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FReloadStarted);
+DECLARE_MULTICAST_DELEGATE(FAmmoEmpty);
+
+class UNiagaraSystem;
+class UNiagaraComponent;
 
 USTRUCT(BlueprintType)
 struct FAmmoData
@@ -46,11 +50,13 @@ class SHOOTTHEMUP_API ASTUBaseWeapon : public AActor
 
     FWeaponUIData GetWeaponUIData() const;
 
+    FAmmoEmpty OnAmmoEmpty;
+
     FAmmoData GetCurrentAmmo() const;
 
     virtual void ReloadAmmo();
 
-    virtual void AddAmmo(int32 NumOfClips);
+    virtual void AddAmmo();
   protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UI")
     FWeaponUIData UIData;
@@ -73,6 +79,9 @@ class SHOOTTHEMUP_API ASTUBaseWeapon : public AActor
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     float TraceMaxDistance = 1500.0f;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
+    UNiagaraSystem* MuzzleFX;
+
     AController *GetPlayerController();
 
     virtual FHitResult MakeLineTrace(AController *Controller = nullptr,
@@ -92,6 +101,7 @@ class SHOOTTHEMUP_API ASTUBaseWeapon : public AActor
 
     virtual void MakeShot();
 
+    UNiagaraComponent *SpawnMuzzleFX();
   private:
     FTimerHandle ShootTimerHandle;
     FAmmoData CurrentAmmo;

@@ -22,16 +22,20 @@ class SHOOTTHEMUP_API USTUWeaponComponent : public UActorComponent
     // Sets default values for this component's properties
     USTUWeaponComponent();
 
-    bool AddAmmoToWeapon(TSubclassOf<ASTUBaseWeapon> Weapon, int32 NumOfClips);
+    bool AddAmmoToWeapon(TSubclassOf<ASTUBaseWeapon> Weapon);
 
-    void StartFire();
+    void OnAmmoEmpty();
+
+    virtual void StartFire();
     void ReloadWeapon();
-    void StopFire();
+    virtual void StopFire();
 
     void SwitchWeapon();
 
     bool CanFire() const;
     bool CanEquip() const;
+
+    bool GetWeaponAmmoData(FAmmoData &AmmoData, TSubclassOf<ASTUBaseWeapon> WeaponClass) const;
 
     UFUNCTION(BlueprintCallable, Category = "UI")
     bool GetWeaponUIData(FWeaponUIData& WeaponData) const;
@@ -42,6 +46,9 @@ class SHOOTTHEMUP_API USTUWeaponComponent : public UActorComponent
     // Called when the game starts
     virtual void BeginPlay() override;
     virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
+
+    uint8 CurrentWeaponIndex = 0;
+    TArray<ASTUBaseWeapon *> Weapons;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
     TArray<TSubclassOf<ASTUBaseWeapon>> WeaponClasses;
@@ -61,16 +68,14 @@ class SHOOTTHEMUP_API USTUWeaponComponent : public UActorComponent
     UPROPERTY(BlueprintAssignable)
     FWeaponSwitch OnWeaponSwitch;
 
+    UPROPERTY()
+    ASTUBaseWeapon *CurrentWeapon = nullptr;
+
     FReloadFinished OnReloadFinished;
 
     void SpawnWeapons();
 
   private:
-    UPROPERTY()
-    ASTUBaseWeapon *CurrentWeapon = nullptr;
-    uint8 CurrentWeaponIndex = 0;
-    TArray<ASTUBaseWeapon *> Weapons;
-
     void PlayAnimMontage(UAnimMontage *AnimMontage);
     void InitAnimations();
     void OnEquipFinished(USkeletalMeshComponent *MeshComp);
