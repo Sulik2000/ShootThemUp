@@ -6,6 +6,7 @@
 #include <Components/STUHealthComponent.h>
 #include <Perception/AISense_Sight.h>
 #include <Player/STUBaseCharacter.h>
+#include <Player/STUPlayerState.h>
 
 AActor *USTUAIPerceptionComponent::GetClosestEnemy() const
 {
@@ -20,6 +21,9 @@ AActor *USTUAIPerceptionComponent::GetClosestEnemy() const
     const auto Pawn = Controller->GetPawn();
     if (!Pawn) return nullptr;
 
+    const auto PlayerState = Controller->GetPlayerState<ASTUPlayerState>();
+    if (!PlayerState) return nullptr;
+
     float BestDistance = MAX_FLT;
     AActor *BestActor = nullptr;
 
@@ -31,6 +35,10 @@ AActor *USTUAIPerceptionComponent::GetClosestEnemy() const
         const auto HealthComponent = Cast<USTUHealthComponent>(Component);
 
         if (HealthComponent && HealthComponent->IsDead()) continue;
+
+        const auto state = actor->GetInstigatorController<AController>()->GetPlayerState<ASTUPlayerState>();
+        if (!state || state->GetTeamID() == PlayerState->GetTeamID()) // Check are owner and actor in the same team
+            continue; 
 
         const auto CurrentDistance = (actor->GetActorLocation() - Pawn->GetActorLocation()).Size();
 

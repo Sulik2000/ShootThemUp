@@ -7,8 +7,6 @@
 #include "GameFramework/Character.h"
 #include "STUBaseCharacter.generated.h"
 
-class UCameraComponent;
-class USpringArmComponent;
 class USTUHealthComponent;
 class UTextRenderComponent;
 class USTUWeaponComponent;
@@ -22,13 +20,9 @@ class SHOOTTHEMUP_API ASTUBaseCharacter : public ACharacter
     // Sets default values for this character's properties
     ASTUBaseCharacter(const FObjectInitializer &ObjInit);
 
+    void SetPlayerColor(const FLinearColor &Color);
+
   protected:
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
-    UCameraComponent *CameraComponent;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
-    USpringArmComponent *SpringArmComponent;
-
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
     USTUHealthComponent *HealthComponent;
 
@@ -47,6 +41,9 @@ class SHOOTTHEMUP_API ASTUBaseCharacter : public ACharacter
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Health")
     FVector2D LandedDamage = FVector2D(10.0f, 100.0f);
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Material")
+    FName MaterialColorName = "Paint Color";
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Health")
     FVector2D LandedDamageVelocity = FVector2D(900.0f, 1200.0f);
 
@@ -61,17 +58,8 @@ class SHOOTTHEMUP_API ASTUBaseCharacter : public ACharacter
     void OnGroundLanded(const FHitResult &Hit);
 
   public:
-    // Called every frame
-    virtual void Tick(float DeltaTime) override;
-
-    // Called to bind functionality to input
-    virtual void SetupPlayerInputComponent(class UInputComponent *PlayerInputComponent) override;
+    
 
   private:
-    void MoveForward(float Amount);
-    void MoveRight(float Amount);
-    void StartRun();
-    void StopRun();
 
-    
 };

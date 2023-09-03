@@ -37,6 +37,7 @@ class SHOOTTHEMUP_API ASTURifleWeapon : public ASTUBaseWeapon
 
     virtual void BeginPlay() override;
   private:
+    AController* GetController();
     FTimerHandle ShootTimerHandle;
 
     UPROPERTY()

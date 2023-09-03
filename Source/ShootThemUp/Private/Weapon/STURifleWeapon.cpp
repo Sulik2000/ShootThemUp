@@ -54,7 +54,7 @@ void ASTURifleWeapon::MakeShot()
         while (HitAngle > 90)
         {
             params.AddIgnoredActor(HitResult.Actor.Get());
-            HitResult = MakeLineTrace(GetPlayerController(), params);
+            HitResult = MakeLineTrace(GetController(), params);
             if (HitResult.bBlockingHit)
             {
                 HitVector = HitResult.ImpactPoint - GetOwner()->GetActorLocation();
@@ -67,7 +67,7 @@ void ASTURifleWeapon::MakeShot()
         }
         if (HitResult.bBlockingHit)
             if (HitResult.Actor.Get() != nullptr)
-                HitResult.Actor.Get()->TakeDamage(Damage, FDamageEvent(), GetPlayerController(), GetOwner());
+                HitResult.Actor.Get()->TakeDamage(Damage, FDamageEvent(), GetController(), GetOwner());
     }
 
     // For debug information
@@ -118,6 +118,12 @@ void ASTURifleWeapon::BeginPlay()
     Super::BeginPlay();
 
     check(FXComponent);
+}
+
+AController* ASTURifleWeapon::GetController()
+{
+    const auto Pawn = Cast<APawn>(GetOwner());
+    return Pawn ? Pawn->GetController() : nullptr;
 }
 
 void ASTURifleWeapon::InitMuzzleFX()

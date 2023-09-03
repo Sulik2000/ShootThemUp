@@ -58,6 +58,8 @@ class SHOOTTHEMUP_API USTUHealthComponent : public UActorComponent
                                FActorComponentTickFunction *ThisTickFunction) override;
 
   private:
+    void Killed(AController* KillerController);
+
     float Health = MaxHealth;
 
     void StartHealing();

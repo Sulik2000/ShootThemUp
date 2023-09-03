@@ -5,6 +5,8 @@
 #include <GameFramework/Controller.h>
 #include <GameFramework/Pawn.h>
 #include <Camera/CameraShakeBase.h>
+#include <STUGameModeBase.h>
+#include <Components/STURespawnComponent.h>
 
 DEFINE_LOG_CATEGORY_STATIC(LogHealthComponent, All, All);
 
@@ -52,6 +54,19 @@ void USTUHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType,
     }
 }
 
+void USTUHealthComponent::Killed(AController *KillerController)
+{
+    if (!GetWorld()) return;
+
+    const auto GameMode = GetWorld()->GetAuthGameMode<ASTUGameModeBase>();
+    if (!GameMode) return;
+
+    const auto Player = GetOwner<APawn>();
+    const auto VictimController = Player ? Player->GetController() : nullptr;
+
+    GameMode->Killed(KillerController, VictimController);
+}
+
 void USTUHealthComponent::StartHealing()
 {
     this->IsHealing = true;
@@ -71,7 +86,10 @@ void USTUHealthComponent::OnTakeAnyDamage(AActor *DamagedActor, float Damage, co
     GetWorld()->GetTimerManager().ClearTimer(HealTimer);
 
     if (IsDead())
+    {
+        Killed(InstigatedBy);
         OnDeath.Broadcast();
+    }
 
     if (!IsDead() && AutoHeal)
     {

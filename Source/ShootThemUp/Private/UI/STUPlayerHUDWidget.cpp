@@ -3,10 +3,16 @@
 #include "UI/STUPlayerHUDWidget.h"
 #include <Components/STUHealthComponent.h>
 #include <Components/STUWeaponComponent.h>
+#include <GameFramework/Character.h>
+#include <Player/STUPlayerState.h>
+#include <STUGameModeBase.h>
 
 float USTUPlayerHUDWidget::GetHealthPercent() const
 {
-    const USTUHealthComponent *HealthComponent = GetHealthComponent();
+    if (!GetOwningPlayerPawn())
+        return 0.0f;
+    const USTUHealthComponent *HealthComponent =
+        GetOwningPlayerPawn<APawn>()->FindComponentByClass<USTUHealthComponent>();
     if (!HealthComponent)
         return 0.0f;
 
@@ -29,9 +35,55 @@ bool USTUPlayerHUDWidget::GetWeaponUIData(FWeaponUIData &WeaponData) const
 
 bool USTUPlayerHUDWidget::IsPlayerAlive() const
 {
-    const auto HealthComponent = GetHealthComponent();
-    if (!HealthComponent) return false;
+    if (!GetOwningPlayerPawn()) return false;
+    const auto HealthComponent = GetOwningPlayerPawn<APawn>()->FindComponentByClass<USTUHealthComponent>();
+    if (!HealthComponent)
+        return false;
     return !HealthComponent->IsDead();
+}
+
+FString USTUPlayerHUDWidget::GetTimeString() const
+{
+    if (!GetWorld())
+        return FString();
+
+    const auto GameMode = GetWorld()->GetAuthGameMode<ASTUGameModeBase>();
+
+    int32 Countdown = GameMode->GetRoundTime();
+
+    int32 Minutes = Countdown / 60;
+
+    Countdown %= 60;
+
+    return FString::Printf(TEXT("%i:%i"), Minutes, Countdown);
+}
+
+FString USTUPlayerHUDWidget::GetRoundString() const
+{
+    if (!GetWorld()) return FString();
+
+    const auto GameMode = GetWorld()->GetAuthGameMode<ASTUGameModeBase>();
+    if (!GameMode) return FString();
+
+    const auto MaxRound = GameMode->GetGameData().RoundsNum;
+    const auto CurrentRound = GameMode->GetCurrentRound();
+
+    return FString::Printf(TEXT("Round: %i / %i"), CurrentRound, MaxRound);
+}
+
+FString USTUPlayerHUDWidget::GetKillsString() const
+{
+    const auto Character = GetOwningPlayerPawn<ACharacter>();
+    if (!Character)
+        return FString();
+
+    const auto Controller = Character->GetController();
+    if (!Controller)
+        return FString();
+
+    const auto PlayerState = Controller->GetPlayerState<ASTUPlayerState>();
+
+    return FString::Printf(TEXT("Kills: %i"), PlayerState->GetKills());
 }
 
 bool USTUPlayerHUDWidget::IsPlayerSpectating() const
@@ -42,27 +94,26 @@ bool USTUPlayerHUDWidget::IsPlayerSpectating() const
 
 bool USTUPlayerHUDWidget::Initialize()
 {
-    const auto HealthComponent = GetHealthComponent();
-    if (HealthComponent)
+    if (GetOwningPlayer())
     {
-        HealthComponent->OnDamageTaken.AddUObject(this, &USTUPlayerHUDWidget::OnHealthChanged);
+        GetOwningPlayer()->GetOnNewPawnNotifier().AddUObject(this, &USTUPlayerHUDWidget::OnNewPawn);
+        OnNewPawn(GetOwningPlayerPawn());
     }
-
+    
     return Super::Initialize();
-}
-
-USTUHealthComponent *USTUPlayerHUDWidget::GetHealthComponent() const
-{
-    auto Character = GetOwningPlayerPawn();
-    if (!Character)
-        return nullptr;
-
-    auto Component = Cast<USTUHealthComponent>(Character->GetComponentByClass(USTUHealthComponent::StaticClass()));
-
-    return Component;
 }
 
 void USTUPlayerHUDWidget::OnHealthChanged()
 {
     OnTakeDamage();
-}   
+}
+
+void USTUPlayerHUDWidget::OnNewPawn(APawn *NewPawn)
+{
+    if (!NewPawn) return;
+    const auto HealthComponent = NewPawn->FindComponentByClass<USTUHealthComponent>();
+    if (HealthComponent)
+    {
+        HealthComponent->OnDamageTaken.AddUObject(this, &USTUPlayerHUDWidget::OnHealthChanged);
+    }
+}

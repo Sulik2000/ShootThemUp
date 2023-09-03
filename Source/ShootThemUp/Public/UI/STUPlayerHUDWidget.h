@@ -36,6 +36,15 @@ class SHOOTTHEMUP_API USTUPlayerHUDWidget : public UUserWidget
     bool IsPlayerAlive() const;
 
     UFUNCTION(BlueprintCallable, Category = "UI")
+    FString GetTimeString() const;
+
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    FString GetRoundString() const;
+
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    FString GetKillsString() const;
+
+    UFUNCTION(BlueprintCallable, Category = "UI")
     bool IsPlayerSpectating() const;
 
     UFUNCTION(BlueprintImplementableEvent, Category = "UI")
@@ -45,7 +54,7 @@ class SHOOTTHEMUP_API USTUPlayerHUDWidget : public UUserWidget
     virtual bool Initialize() override;
 
   private:
-    USTUHealthComponent *GetHealthComponent() const;
-
     void OnHealthChanged();
+
+    void OnNewPawn(APawn* NewPawn);
 };
